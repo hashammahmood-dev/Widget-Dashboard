@@ -4,7 +4,6 @@ import Modal from "./Modal";
 import FormField from "./FormField";
 import Spinner from "./Spinner";
 import Button from "./Button";
-import { createWidget } from "../services/widgetApi";
 
 const initialState = {
   knowledgeBase: "",
@@ -14,6 +13,21 @@ const initialState = {
   height: "",
 };
 
+/* ---------------- MOCK API ---------------- */
+const mockCreateWidget = (payload) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        data: {
+          widgetId: crypto.randomUUID(),
+          script: `<script src="https://fake-widget.com/widget.js?id=${Date.now()}"></script>`,
+        },
+      });
+    }, 1000);
+  });
+};
+/* ------------------------------------------ */
+
 function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
@@ -22,8 +36,8 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((previous) => ({ ...previous, [name]: value }));
-    setErrors((previous) => ({ ...previous, [name]: "" }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validate = () => {
@@ -48,12 +62,21 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
 
     try {
       const fileText = await file.text();
-      setFormData((previous) => ({ ...previous, knowledgeBase: fileText }));
-      setErrors((previous) => ({ ...previous, knowledgeBase: "" }));
+
+      setFormData((prev) => ({
+        ...prev,
+        knowledgeBase: fileText,
+      }));
+
+      setErrors((prev) => ({
+        ...prev,
+        knowledgeBase: "",
+      }));
+
       setUploadedFileName(file.name);
-      toast.success("Knowledge base file loaded");
+      toast.success("File loaded successfully");
     } catch {
-      toast.error("Could not read selected file");
+      toast.error("Could not read file");
     }
   };
 
@@ -64,8 +87,10 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  /* ---------------- SUBMIT (MOCK) ---------------- */
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -73,30 +98,42 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
     }
 
     setIsSubmitting(true);
+
     try {
-      const response = await createWidget(formData);
+      const response = await mockCreateWidget(formData);
+
       onSuccess(response.data, formData);
+
       toast.success("Widget created successfully");
+
       resetState();
+      onClose();
     } catch (error) {
-      const serverMessage = error.response?.data?.message;
-      const message =
-        serverMessage ||
-        "Failed to create widget. Ensure backend is running on http://localhost:8000";
-      toast.error(message);
+      toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
+  /* ---------------------------------------------- */
 
   return (
-    <Modal isOpen={isOpen} title="Create Widget" onClose={handleClose} maxWidthClass="max-w-5xl">
+    <Modal
+      isOpen={isOpen}
+      title="Create Widget"
+      onClose={handleClose}
+      maxWidthClass="max-w-5xl"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
+
         <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
-          Tip: in local development, this works with or without a JWT token.
+          ⚡ Demo mode active (no backend required)
         </p>
+
         <div className="grid gap-6 lg:grid-cols-2">
+
+          {/* LEFT SIDE */}
           <div className="space-y-4">
+
             <FormField
               label="Knowledge Base"
               name="knowledgeBase"
@@ -104,97 +141,103 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
               onChange={handleChange}
               error={errors.knowledgeBase}
               as="textarea"
-              placeholder="Describe your knowledge base content..."
+              placeholder="Describe your content..."
             />
+
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <label
-                htmlFor="knowledgeBaseFile"
-                className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
-              >
-                Browse File
+              <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
+                Upload File
               </label>
+
               <input
-                id="knowledgeBaseFile"
                 type="file"
                 accept=".txt,.md,.json,.csv"
                 onChange={handleKnowledgeBaseFile}
-                className="block w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition-all file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100"
+                className="w-full cursor-pointer rounded-xl border bg-white p-2 text-sm"
               />
-              {uploadedFileName ? (
-                <p className="mt-2 text-xs text-slate-500">Loaded: {uploadedFileName}</p>
-              ) : null}
+
+              {uploadedFileName && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Loaded: {uploadedFileName}
+                </p>
+              )}
             </div>
 
             <FormField
-              label="Platform Type"
+              label="Platform"
               name="platform"
               value={formData.platform}
               onChange={handleChange}
               error={errors.platform}
               as="select"
               options={["Website", "Shopify", "WordPress"]}
-              placeholder="Select platform"
             />
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-3 gap-3">
               <FormField
-                label="Color Picker"
+                label="Color"
                 name="color"
+                type="color"
                 value={formData.color}
                 onChange={handleChange}
-                error={errors.color}
-                type="color"
-                as="input"
               />
+
               <FormField
                 label="Width"
                 name="width"
                 value={formData.width}
                 onChange={handleChange}
-                error={errors.width}
-                as="input"
                 placeholder="300px"
               />
+
               <FormField
                 label="Height"
                 name="height"
                 value={formData.height}
                 onChange={handleChange}
-                error={errors.height}
-                as="input"
                 placeholder="400px"
               />
             </div>
+
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Live Preview</p>
+          {/* RIGHT SIDE PREVIEW */}
+          <div className="rounded-2xl border bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              Live Preview
+            </p>
+
             <div className="mt-4 flex min-h-[280px] items-end justify-end rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 p-4">
+
               <div
-                className="max-w-full rounded-2xl border border-white/70 p-4 text-white shadow-lg transition-all duration-300"
+                className="rounded-2xl p-4 text-white shadow-lg"
                 style={{
                   width: formData.width || "300px",
                   height: formData.height || "180px",
-                  backgroundColor: formData.color || "#4f46e5",
+                  backgroundColor: formData.color,
                 }}
               >
-                <p className="text-xs uppercase tracking-wider text-white/80">Widget</p>
-                <p className="mt-2 max-h-[120px] overflow-hidden text-sm text-white/95">
-                  {formData.knowledgeBase || "Your widget preview updates in real-time as you type."}
+                <p className="text-xs opacity-80">Widget</p>
+                <p className="mt-2 text-sm">
+                  {formData.knowledgeBase ||
+                    "Live preview will appear here"}
                 </p>
               </div>
+
             </div>
           </div>
         </div>
 
+        {/* BUTTON */}
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 py-3 text-base"
+          className="flex w-full items-center justify-center gap-2 py-3"
         >
-          {isSubmitting ? <Spinner /> : null}
+          {isSubmitting && <Spinner />}
           {isSubmitting ? "Creating..." : "Create Widget"}
         </Button>
+
       </form>
     </Modal>
   );
