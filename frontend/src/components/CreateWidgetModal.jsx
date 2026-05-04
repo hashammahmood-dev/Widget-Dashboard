@@ -13,7 +13,7 @@ const initialState = {
   height: "",
 };
 
-/* ---------------- MOCK API ---------------- */
+/* MOCK API */
 const mockCreateWidget = (payload) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -26,7 +26,6 @@ const mockCreateWidget = (payload) => {
     }, 1000);
   });
 };
-/* ------------------------------------------ */
 
 function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState(initialState);
@@ -62,17 +61,7 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
 
     try {
       const fileText = await file.text();
-
-      setFormData((prev) => ({
-        ...prev,
-        knowledgeBase: fileText,
-      }));
-
-      setErrors((prev) => ({
-        ...prev,
-        knowledgeBase: "",
-      }));
-
+      setFormData((prev) => ({ ...prev, knowledgeBase: fileText }));
       setUploadedFileName(file.name);
       toast.success("File loaded successfully");
     } catch {
@@ -87,7 +76,6 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
-  /* ---------------- SUBMIT (MOCK) ---------------- */
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -108,13 +96,12 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
 
       resetState();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
-  /* ---------------------------------------------- */
 
   return (
     <Modal
@@ -123,13 +110,16 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
       onClose={handleClose}
       maxWidthClass="max-w-5xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
 
+      <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* INFO */}
         <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
           ⚡ Demo mode active (no backend required)
         </p>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* GRID → MOBILE FIX */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* LEFT SIDE */}
           <div className="space-y-4">
@@ -144,7 +134,9 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
               placeholder="Describe your content..."
             />
 
+            {/* FILE UPLOAD */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+
               <label className="mb-2 block text-xs font-semibold uppercase text-slate-500">
                 Upload File
               </label>
@@ -157,7 +149,7 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
               />
 
               {uploadedFileName && (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-slate-500 break-words">
                   Loaded: {uploadedFileName}
                 </p>
               )}
@@ -173,7 +165,9 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
               options={["Website", "Shopify", "WordPress"]}
             />
 
-            <div className="grid grid-cols-3 gap-3">
+            {/* RESPONSIVE INPUT GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
               <FormField
                 label="Color"
                 name="color"
@@ -197,48 +191,54 @@ function CreateWidgetModal({ isOpen, onClose, onSuccess }) {
                 onChange={handleChange}
                 placeholder="400px"
               />
+
             </div>
 
           </div>
 
-          {/* RIGHT SIDE PREVIEW */}
+          {/* RIGHT SIDE (PREVIEW) */}
           <div className="rounded-2xl border bg-slate-50 p-4">
+
             <p className="text-xs font-semibold uppercase text-slate-500">
               Live Preview
             </p>
 
-            <div className="mt-4 flex min-h-[280px] items-end justify-end rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 p-4">
+            <div className="mt-4 flex min-h-[220px] sm:min-h-[280px] items-end justify-end rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 p-3 sm:p-4">
 
               <div
-                className="rounded-2xl p-4 text-white shadow-lg"
+                className="rounded-2xl p-3 sm:p-4 text-white shadow-lg w-full sm:w-auto"
                 style={{
-                  width: formData.width || "300px",
+                  width: formData.width || "100%",
+                  maxWidth: "300px",
                   height: formData.height || "180px",
                   backgroundColor: formData.color,
                 }}
               >
                 <p className="text-xs opacity-80">Widget</p>
-                <p className="mt-2 text-sm">
+
+                <p className="mt-2 text-sm break-words">
                   {formData.knowledgeBase ||
-                    "Live preview will appear here"}
+                    "Live preview updates as you type"}
                 </p>
               </div>
 
             </div>
           </div>
+
         </div>
 
         {/* BUTTON */}
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 py-3"
+          className="w-full flex items-center justify-center gap-2 py-3"
         >
           {isSubmitting && <Spinner />}
           {isSubmitting ? "Creating..." : "Create Widget"}
         </Button>
 
       </form>
+
     </Modal>
   );
 }

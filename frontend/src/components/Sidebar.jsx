@@ -29,9 +29,7 @@ function Sidebar({ onLogout }) {
         ))}
       </nav>
       <div className="mt-4 border-t border-slate-100 pt-4">
-        <Button variant="secondary" onClick={() => navigate("/dashboard")} className="w-full">
-          Go To Dashboard
-        </Button>
+       
         <Button variant="secondary" onClick={onLogout} className="mt-2 w-full">
           Logout
         </Button>
